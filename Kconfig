@@ -1,0 +1,28 @@
+menu "Telenor Managed IoT Cloud CoAP Application"
+
+config UDP_SERVER_IP
+	string "UDP server IP address"
+	default "35.228.246.246"
+
+config UDP_SERVER_PORT
+	int "UDP server port"
+	default 1234
+
+endmenu
+
+menu "Sensors"
+
+config UI_LED_PWM_FREQUENCY
+	int "LED PWM frequency"
+	range 100 1000000
+	default 20000
+
+endmenu
+
+menu "Zephyr Kernel"
+source "$ZEPHYR_BASE/Kconfig.zephyr"
+endmenu
+
+module = MAIN
+module-str = MAIN
+source "${ZEPHYR_BASE}/subsys/logging/Kconfig.template.log_config"
