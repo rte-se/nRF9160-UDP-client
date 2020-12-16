@@ -2,6 +2,7 @@
 #include <modem/lte_lc.h>
 #include <modem/modem_info.h>
 #include <logging/log.h>
+#include <stdio.h>
 
 #include "modem.h"
 
@@ -9,6 +10,7 @@
 LOG_MODULE_REGISTER(MODEM);
 
 struct modem_param_info modem_param;
+static MESSAGE last_message;
 
 void modem_init() {
   int err;
@@ -46,4 +48,57 @@ void modem_sample(modem_t *modem) {
     modem->battery = modem_param.device.battery.value;
     modem->imei = modem_param.device.imei.value;
   }
+}
+
+void board_dump_modem_message(uint8_t *buffer, int len) {
+
+  modem_sample(&last_message.modem);
+  last_message.uptime = k_uptime_get() / 1000;
+
+  snprintf(buffer, len, "%lld,%d,%d,%s,%d,%d,%s,%s,%s,%d,%d",
+    last_message.uptime,
+    last_message.modem.current_band,
+    last_message.modem.area_code,
+    last_message.modem.current_operator,
+    last_message.modem.mcc,
+    last_message.modem.mnc,
+    last_message.modem.cellid_hex,
+    last_message.modem.ip_address,
+    last_message.modem.modem_fw,
+    last_message.modem.battery,
+    last_message.modem.imei);
+}
+
+int blocking_connect(int fd, struct sockaddr *local_addr, socklen_t len)
+{
+	int err;
+
+	do {
+		err = connect(fd, local_addr, len);
+
+	} while (err < 0 && errno == EAGAIN);
+
+	return err;
+}
+
+int blocking_recv(int fd, void *buf, size_t size, int flags)
+{
+	int err;
+
+	do {
+		err = recv(fd, buf, size, flags);
+	} while (err < 0 && errno == EAGAIN);
+
+	return err;
+}
+
+int blocking_send(int fd, const void *buf, size_t size, int flags)
+{
+	int err;
+
+	do {
+		err = send(fd, buf, size, flags);
+	} while (err < 0 && errno == EAGAIN);
+
+	return err;
 }

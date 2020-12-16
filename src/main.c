@@ -4,7 +4,7 @@
 #include <logging/log.h>
 #include <errno.h>
 
-#include "board.h"
+#include "modem.h"
 #include "led.h"
 
 #define LOG_LEVEL CONFIG_MAIN_LOG_LEVEL
@@ -17,41 +17,10 @@ static uint8_t receive_buffer[256];
 static struct sockaddr_in local_addr;
 static struct sockaddr_in remote_addr;
 
-int blocking_connect(int fd, struct sockaddr *local_addr, socklen_t len)
-{
-	int err;
-
-	do {
-		err = connect(fd, local_addr, len);
-
-	} while (err < 0 && errno == EAGAIN);
-
-	return err;
-}
-
-int blocking_recv(int fd, void *buf, size_t size, int flags)
-{
-	int err;
-
-	do {
-		err = recv(fd, buf, size, flags);
-	} while (err < 0 && errno == EAGAIN);
-
-	return err;
-}
-
-int blocking_send(int fd, const void *buf, size_t size, int flags)
-{
-	int err;
-
-	do {
-		err = send(fd, buf, size, flags);
-	} while (err < 0 && errno == EAGAIN);
-
-	return err;
-}
 
 bool udp_echo_test(const char *message) {
+
+  set_led_0(true);
 
   int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (sock < 0) {
@@ -87,6 +56,7 @@ bool udp_echo_test(const char *message) {
   LOG_INF("Received %d chars: \"%s\"", recv_res, log_strdup(receive_buffer));
 
   close(sock);
+  set_led_0(false);
   return true;
 }
 
@@ -94,9 +64,14 @@ bool udp_echo_test(const char *message) {
 void main(void) {
   int64_t next_send_time = SEND_INTERVAL_MS;
 
-  board_init();
+  LOG_INF("Initialising board");
 
-  led_set_effect(LED_PATTERN_NORMAL);
+  modem_init();
+
+  if (NULL == led_init()) {
+    LOG_INF("Unable to initialize LED");
+  }
+
   LOG_INF("Board inited! %s", CONFIG_BOARD);
 
   local_addr.sin_family = AF_INET;
@@ -112,8 +87,6 @@ void main(void) {
   while (1) {
 
     if (k_uptime_get() >= next_send_time) {
-
-      led_set_effect(LED_PATTERN_SENDING);
 
       if (udp_echo_test("Hello on UDP!")) {
         LOG_INF("Echo ok!"); 
