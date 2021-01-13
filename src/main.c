@@ -11,6 +11,8 @@
 LOG_MODULE_REGISTER(MAIN);
 
 #define SEND_INTERVAL_MS 10000
+#define UDP_SERVER_IP "35.228.246.246"
+#define UDP_SERVER_PORT 1234
 
 static uint8_t receive_buffer[256];
 
@@ -68,7 +70,7 @@ void main(void) {
 
   modem_init();
 
-  if (NULL == led_init()) {
+  if (!led_init()) {
     LOG_INF("Unable to initialize LED");
   }
 
@@ -79,8 +81,8 @@ void main(void) {
   local_addr.sin_addr.s_addr = 0;
 
   remote_addr.sin_family = AF_INET;
-  remote_addr.sin_port = htons(CONFIG_UDP_SERVER_PORT);
-  net_addr_pton(AF_INET, CONFIG_UDP_SERVER_IP, &remote_addr.sin_addr);
+  remote_addr.sin_port = htons(UDP_SERVER_PORT);
+  net_addr_pton(AF_INET, UDP_SERVER_IP, &remote_addr.sin_addr);
 
   next_send_time = k_uptime_get();
 

@@ -9,4 +9,4 @@ manifest:
       revision: v1.4.0
       import: true
   self:
-    path: telenor-coap
+    path: udp-test
